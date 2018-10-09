@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Signature>
+  <Version>1.0</Version>
+  <RelatedEBD>
+    <EBDID>010103320681000000010000000000000000</EBDID>
+  </RelatedEBD>
+  <SignatureCert>
+    <CertType>01</CertType>
+    <IssuerID>
+    </IssuerID>
+    <CertSN>
+    </CertSN>
+  </SignatureCert>
+  <SignatureTime>E8-E0-37-E9-AD-2E-E5-40</SignatureTime>
+  <DigestAlgorithm>SM3</DigestAlgorithm>
+  <SignatureAlgorithm>SM2</SignatureAlgorithm>
+  <SignatureValue>AAAHPwAAAAAI9zGKu1HHjrs3ZWTAIJNoZYDtscu9xhO98ocvep+sPnMWDYRsLcsDxxs4S/ENwO6puueVU7kR7pwmdQnWFFY0VHI=</SignatureValue>
+</Signature>
