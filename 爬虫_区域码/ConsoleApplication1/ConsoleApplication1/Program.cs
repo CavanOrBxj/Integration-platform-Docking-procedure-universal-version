@@ -29,22 +29,37 @@ namespace ConsoleApplication1
                 Directory.CreateDirectory(tmp);//创建新路径
             }
             AllSheng();
-           // Sheng("11");
-            // Sheng("12");
-            //Sheng("13");
-            //Sheng("14");
-            //Sheng("15");
-            //Sheng("31");
-            Sheng("32");
-           //  Sheng("33");
-            //Sheng("34");
-            //Sheng("35");
-            //Sheng("44");
-            //Sheng("45");
-            //Sheng("46");
-            //Sheng("50");
-            //Sheng("51");
-            // Sheng("52");
+            Sheng("11");
+            Sheng("12");
+            Sheng("13");
+            Sheng("14");
+            Sheng("15");
+            Sheng("21");
+            Sheng("22");
+            Sheng("23");
+            Sheng("31");
+            //Sheng("32");
+            Sheng("33");
+            Sheng("34");
+            Sheng("35");
+            Sheng("36");
+            Sheng("37");
+            Sheng("41");
+            Sheng("42");
+            Sheng("43");
+            Sheng("44");
+            Sheng("45");
+            Sheng("46");
+            Sheng("50");
+            Sheng("51");
+            Sheng("52");
+            Sheng("53");
+            Sheng("54");
+            Sheng("61");
+            Sheng("62");
+            Sheng("63");
+            Sheng("64");
+            Sheng("65");
 
             // Sql();
 

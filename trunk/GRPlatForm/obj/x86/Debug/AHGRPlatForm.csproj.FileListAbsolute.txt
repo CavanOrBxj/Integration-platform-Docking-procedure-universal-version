@@ -596,4 +596,3 @@ C:\Users\Administrator\Desktop\danyang\trunk\GRPlatForm\obj\x86\Debug\AHGRPlatFo
 C:\Users\Administrator\Desktop\danyang\trunk\GRPlatForm\obj\x86\Debug\AHGRPlatForm.csproj.CopyComplete
 C:\Users\Administrator\Desktop\danyang\trunk\GRPlatForm\obj\x86\Debug\HBPlatForm.exe
 C:\Users\Administrator\Desktop\danyang\trunk\GRPlatForm\obj\x86\Debug\HBPlatForm.pdb
-D:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\AHGRPlatForm.csprojAssemblyReference.cache

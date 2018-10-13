@@ -13,14 +13,14 @@ namespace GRPlatForm
         public string Latitude;//纬度
         public string CurrentURL;//当前平台对县平台的url
 
-        public Dictionary<string, string> AreacodeDic;
+     //   public Dictionary<string, string> AreacodeDic;
 
         private SingletonInfo()                                                                 
         {
             Longitude = "";
             Latitude = "";
             CurrentURL = "";
-            AreacodeDic = new Dictionary<string, string>();
+           // AreacodeDic = new Dictionary<string, string>();
         }
         public static SingletonInfo GetInstance()
         {

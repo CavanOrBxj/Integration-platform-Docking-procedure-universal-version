@@ -43,6 +43,7 @@
             this.txtfilename = new System.Windows.Forms.TextBox();
             this.button2 = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.button3 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -82,7 +83,6 @@
             this.txtDb.Size = new System.Drawing.Size(179, 23);
             this.txtDb.TabIndex = 29;
             this.txtDb.TabStop = false;
-            this.txtDb.Text = "voladorDanyang";
             // 
             // label6
             // 
@@ -102,7 +102,6 @@
             this.txtDbPass.Size = new System.Drawing.Size(179, 23);
             this.txtDbPass.TabIndex = 27;
             this.txtDbPass.TabStop = false;
-            this.txtDbPass.Text = "tuners2012";
             // 
             // label5
             // 
@@ -122,7 +121,6 @@
             this.txtDbuser.Size = new System.Drawing.Size(179, 23);
             this.txtDbuser.TabIndex = 25;
             this.txtDbuser.TabStop = false;
-            this.txtDbuser.Text = "sa.tuners";
             // 
             // label3
             // 
@@ -142,7 +140,6 @@
             this.txtServer.Size = new System.Drawing.Size(179, 23);
             this.txtServer.TabIndex = 23;
             this.txtServer.TabStop = false;
-            this.txtServer.Text = "192.168.4.168";
             // 
             // groupBox2
             // 
@@ -187,11 +184,11 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(376, 333);
+            this.button2.Location = new System.Drawing.Point(97, 333);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(123, 54);
+            this.button2.Size = new System.Drawing.Size(352, 54);
             this.button2.TabIndex = 2;
-            this.button2.Text = "开始";
+            this.button2.Text = "创建AeraCodeNation表并导入数据（不使用）";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
@@ -199,16 +196,27 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(97, 427);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(352, 54);
+            this.button3.TabIndex = 3;
+            this.button3.Text = "开始替换";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(531, 422);
+            this.ClientSize = new System.Drawing.Size(531, 564);
+            this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "区域码导入工具";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
@@ -234,6 +242,7 @@
         private System.Windows.Forms.TextBox txtfilename;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.Button button3;
     }
 }
 

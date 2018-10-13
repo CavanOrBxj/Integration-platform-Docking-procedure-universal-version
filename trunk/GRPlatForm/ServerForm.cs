@@ -532,26 +532,7 @@ namespace GRPlatForm
             //InfromActiveTime.Elapsed += new System.Timers.ElapsedEventHandler(InfromActive);
             //InfromActiveTime.AutoReset = true;
 
-            InitAeracodeDic();
-        }
-
-
-        public void InitAeracodeDic()   
-        {
-           string MediaSql = "select *  from AeraCodeNation";
-            DataTable dtMedia = mainForm.dba.getQueryInfoBySQL(MediaSql);
-         //   Thread.Sleep(5000);
-          //  int num = dtMedia.Rows.Count;
-
-          //  MessageBox.Show("cha");
-            if (dtMedia != null && dtMedia.Rows.Count > 0)
-            {
-
-                for (int i = 0; i < dtMedia.Rows.Count; i++)
-                {
-                    SingletonInfo.GetInstance().AreacodeDic.Add(dtMedia.Rows[i][0].ToString().Trim(), dtMedia.Rows[i][1].ToString().Trim());
-                }
-            }
+         //   InitAeracodeDic();
         }
 
 
@@ -1465,10 +1446,7 @@ namespace GRPlatForm
         public string GetORG_ID(string code)
         {
             string org = "";
-            string name = SingletonInfo.GetInstance().AreacodeDic[code].ToString();
-            string nametmp = name.Substring(0, 2)+"%";
-            string org_codeatmp = "P" + code.Substring(0, 2).ToString() + "Q" + code.Substring(2, 2).ToString() + "C" + code.Substring(4, 2).ToString()+"%";
-            string sqlstr = "select ORG_ID from Organization where ORG_CODEA like'" + org_codeatmp + "' and ORG_DETAIL like '" + nametmp + "'";
+            string sqlstr = "select ORG_ID from Organization where GB_CODE ='" + code + "'";
             DataTable dtMedia = mainForm.dba.getQueryInfoBySQL(sqlstr);
             if (dtMedia != null && dtMedia.Rows.Count >0)
             {
@@ -1477,14 +1455,10 @@ namespace GRPlatForm
                 {
                     org = dtMedia.Rows[0][0].ToString();
                 }
-                else
-                {
-                    //有多条数据  查询条件不够
-                    Log.Instance.LogWrite("国标区域码匹配到多个区域："+ code.ToString());
-
-                }
             }
-                return org;
+            //MessageBox.Show(org.ToString());
+            return org;
+         
         }
 
         private void TarOMRequest(XmlDocument xmlStateDoc, responseXML rState, string strOMDType, string frdStateName, string xmlEBMStateFileName, List<Device> lDev)
