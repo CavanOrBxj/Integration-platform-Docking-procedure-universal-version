@@ -179,6 +179,17 @@ namespace GRPlatForm
             }
         }
 
+
+        public  void OnlineCheck(bool state)
+        {
+            this.Invoke((EventHandler)delegate
+            {
+                this.Text = "在线";
+                dtLinkTime = DateTime.Now;//刷新时间
+            });
+
+        }
+
         private void btnStart_Click(object sender, EventArgs e)
         {
             if (btnStart.Text == "启动服务")
@@ -1384,9 +1395,18 @@ namespace GRPlatForm
                                             this.Invoke(new Action(() => { list_OMDRequest.Items.Add(OMDRequestItemEBMStateRequest); }));
                                             break;
                                         case "ConnectionCheck":
-                                            ListViewItem OMDRequestItemHeart = new ListViewItem();
-                                            OMDRequestItemHeart.Text = "心跳请求";
-                                            this.Invoke(new Action(() => { list_OMDRequest.Items.Add(OMDRequestItemHeart); }));
+                                            //心跳没有签名文件  走不到这一步
+
+                                            //ListViewItem OMDRequestItemHeart = new ListViewItem();
+                                            //OMDRequestItemHeart.Text = "心跳请求";
+                                            //this.Invoke(new Action(() => { list_OMDRequest.Items.Add(OMDRequestItemHeart); }));
+
+                                            //this.Invoke((EventHandler)delegate
+                                            //{
+                                            //    this.Text = "在线";
+                                            //    dtLinkTime = DateTime.Now;//刷新时间
+                                            //});
+
                                             break;
                                         case "OMDRequest":
                                             #region 运维请求反馈
@@ -3113,7 +3133,7 @@ namespace GRPlatForm
                 string HreartName = "01" + rHeart.sHBRONO + "0000000000000000";
                 string xmlStateFileName = "EBDB_" + "01" + rHeart.sHBRONO + "0000000000000000.xml";
                 CreateXML(xmlHeartDoc, TimesHeartSourceFilePath + "\\" + xmlStateFileName);
-                ServerForm.mainFrm.GenerateSignatureFile(TimesHeartSourceFilePath, "01" + rHeart.sHBRONO + "0000000000000000");
+               // ServerForm.mainFrm.GenerateSignatureFile(TimesHeartSourceFilePath, "01" + rHeart.sHBRONO + "0000000000000000");
                 tar.CreatTar(TimesHeartSourceFilePath, sSendTarPath, "01" + rHeart.sHBRONO + "0000000000000000");
             }
             catch (Exception ec)
@@ -3121,29 +3141,39 @@ namespace GRPlatForm
                 Log.Instance.LogWrite("心跳处错误：" + ec.Message);
             }
             string sHeartBeatTarName = sSendTarPath + "\\" + "EBDT_" + "01" + rHeart.sHBRONO + "0000000000000000" + ".tar";
-            HttpSendFile.UploadFilesByPost(sZJPostUrlAddress, sHeartBeatTarName);
+            string pp= HttpSendFile.UploadFilesByPost(sZJPostUrlAddress, sHeartBeatTarName);
+
+
 
             #region 心跳判断
-            if (dtLinkTime != null && dtLinkTime.ToString() != "")
+            if (pp=="1")
             {
-                int timetick = DateDiff(DateTime.Now, dtLinkTime);
-                //大于600秒（10分钟）
-                if (timetick > OnOffLineInterval)
+                //发送成功
+                if (dtLinkTime != null && dtLinkTime.ToString() != "")
                 {
-                    this.Text = "离线";
+                    int timetick = DateDiff(DateTime.Now, dtLinkTime);
+                    //大于600秒（10分钟）
+                    if (timetick > OnOffLineInterval)
+                    {
+                        this.Text = "离线";
+                    }
+                    else
+                    {
+                        this.Text = "在线";
+                    }
+                    if (timetick > OnOffLineInterval * 3)
+                    {
+                        dtLinkTime = DateTime.Now.AddSeconds(-2 * OnOffLineInterval);
+                    }
                 }
                 else
                 {
-                    this.Text = "在线";
-                }
-                if (timetick > OnOffLineInterval * 3)
-                {
-                    dtLinkTime = DateTime.Now.AddSeconds(-2 * OnOffLineInterval);
+                    dtLinkTime = DateTime.Now;
                 }
             }
             else
             {
-                dtLinkTime = DateTime.Now;
+                this.Text = "离线";
             }
             #endregion End
             Thread.Sleep(1000);
@@ -3188,104 +3218,7 @@ namespace GRPlatForm
                 StateOrInfoUp(strOMDType);
             }
 
-            #region 以下内容未使用
-            /*
-            DeleteFolder(ServerForm.sSendTarPath);
-            //t.Enabled = false;
-            XmlDocument xmlHeartDoc = new XmlDocument();
-            responseXML rHeart = new responseXML();
-            rHeart.SourceAreaCode = strSourceAreaCode;
-            rHeart.SourceType = strSourceType;
-            rHeart.SourceName = strSourceName;
-            rHeart.SourceID = strSourceID;
-            rHeart.sHBRONO = strHBRONO;
-            string MediaSql = "";
-            string strSRV_ID = "";
-            string strSRV_CODE = "";
-            ServerForm.DeleteFolder(SRVSSourceFilePath);//删除原有XML发送文件的文件夹下的XML
-            string frdStateName = "";
-            List<Device> lDev = new List<Device>();
-            try
-            {
-                MediaSql = "select top(20) SRV_ID,SRV_CODE from SRV";
-                DataTable dtMedia = mainForm.dba.getQueryInfoBySQL(MediaSql);
-                if (dtMedia != null && dtMedia.Rows.Count > 0)
-                {
-                    //if (dtMedia.Rows.Count > 100)
-                    {
-                        int mod = dtMedia.Rows.Count / 100 + 1;
-                        //for (int i = 0; i < mod; i++)
-                        {
-                            for (int idtM = 0; idtM < dtMedia.Rows.Count; idtM++)
-                            {
-                                Device DV = new Device();
-                                strSRV_ID = dtMedia.Rows[idtM][0].ToString().Trim();
-                                strSRV_CODE = dtMedia.Rows[idtM][1].ToString();
-                                DV.DeviceID = strSRV_ID;
-                                DV.DeviceName = strSRV_ID;
-                                lDev.Add(DV);
-                            }
-                            Random rdState = new Random();
-                            frdStateName = "10" + rHeart.sHBRONO + "0000000000000" + rdState.Next(100, 999).ToString();
-                            string xmlEBMStateFileName = "\\EBDB_" + frdStateName + ".xml";
-
-                            xmlHeartDoc = rHeart.DeviceStateResponse(lDev, frdStateName);
-                            CreateXML(xmlHeartDoc, SRVSSourceFilePath + xmlEBMStateFileName);
-                            ServerForm.mainFrm.GenerateSignatureFile(SRVSSourceFilePath, frdStateName);
-                            ServerForm.tar.CreatTar(SRVSSourceFilePath, ServerForm.sSendTarPath, frdStateName);//使用新TAR
-                            string sHeartBeatTarName = sSendTarPath + "\\" + "EBDT_" + frdStateName + ".tar";
-                            HttpSendFile.UploadFilesByPost(sZJPostUrlAddress, sHeartBeatTarName);
-                        }
-                    }
-                    //else
-                    //{
-                    //    for (int idtM = 0; idtM < dtMedia.Rows.Count; idtM++)
-                    //    {
-                    //        Device DV = new Device();
-                    //        strSRV_ID = dtMedia.Rows[idtM][0].ToString();
-                    //        strSRV_CODE = dtMedia.Rows[idtM][1].ToString();
-                    //        DV.DeviceID = strSRV_ID;
-                    //        DV.DeviceName = strSRV_ID;
-                    //        lDev.Add(DV);
-                    //    }
-                    //    Random rdState = new Random();
-                    //    frdStateName = "10" + rHeart.sHBRONO + "0000000000000" + rdState.Next(100, 999).ToString();
-                    //    string xmlEBMStateFileName = "\\EBDB_" + frdStateName + ".xml";
-
-                    //    xmlHeartDoc = rHeart.DeviceStateResponse(lDev, frdStateName);
-                    //    CreateXML(xmlHeartDoc, SRVSSourceFilePath + xmlEBMStateFileName);
-                    //    ServerForm.mainFrm.GenerateSignatureFile(SRVSSourceFilePath, frdStateName);
-                    //    ServerForm.tar.CreatTar(SRVSSourceFilePath, ServerForm.sSendTarPath, frdStateName);//使用新TAR
-                    //    string sHeartBeatTarName = sSendTarPath + "\\" + "EBDT_" + frdStateName + ".tar";
-                    //    HttpSendFile.UploadFilesByPost(sZJPostUrlAddress, sHeartBeatTarName);
-                    //}
-
-                }
-                else
-                {
-                    Random rdState = new Random();
-                    frdStateName = "10" + rHeart.sHBRONO + "0000000000000" + rdState.Next(100, 999).ToString();
-                    string xmlEBMStateFileName = "\\EBDB_" + frdStateName + ".xml";
-
-                    xmlHeartDoc = rHeart.DeviceStateResponse(lDev, frdStateName);
-                    CreateXML(xmlHeartDoc, SRVSSourceFilePath + xmlEBMStateFileName);
-                    ServerForm.mainFrm.GenerateSignatureFile(SRVSSourceFilePath, frdStateName);
-                    ServerForm.tar.CreatTar(SRVSSourceFilePath, ServerForm.sSendTarPath, frdStateName);//使用新TAR
-                    string sHeartBeatTarName = sSendTarPath + "\\" + "EBDT_" + frdStateName + ".tar";
-                    HttpSendFile.UploadFilesByPost(sZJPostUrlAddress, sHeartBeatTarName);
-                }
-            }
-            catch (Exception err)
-            {
-                Console.WriteLine("设备状态上传:" + DateTime.Now.ToString() + err.Message);
-                // Thread.Sleep(50);
-                // t.Enabled = true;
-            }
-            //Thread.Sleep(5000);
-            //t.Enabled = true;
-            Thread.Sleep(50);
-            */
-            #endregion
+          
         }
 
         /// <summary>
@@ -3298,8 +3231,6 @@ namespace GRPlatForm
             {
                 StateOrInfoUp(strOMDType);
             }
-
-          
         }
 
         /// <summary>
@@ -3365,14 +3296,14 @@ namespace GRPlatForm
         private void btn_InfroState_Click(object sender, EventArgs e)
         {
             string StateFaleText = btn_InfroState.Text;
-            if (StateFaleText == "信息状态-开启")
+            if (StateFaleText == "开启信息状态上报")
             {
                 tSrvState.Enabled = true;
                 tSrvInfo.Enabled = true;
                 tTerraceInfrom.Enabled = true;
                 tTerraceState.Enabled = true;
                 //InfromActiveTime.Enabled = true;
-                btn_InfroState.Text = "信息状态-关闭";
+                btn_InfroState.Text = "关闭信息状态上报";
             }
             else
             {
@@ -3381,7 +3312,7 @@ namespace GRPlatForm
                 tTerraceInfrom.Enabled = false;
                 tTerraceState.Enabled = false;
                 //InfromActiveTime.Enabled = false;
-                btn_InfroState.Text = "信息状态-开启";
+                btn_InfroState.Text = "开启信息状态上报";
             }
         }
 
@@ -3389,15 +3320,15 @@ namespace GRPlatForm
         private void btn_HreartState_Click(object sender, EventArgs e)
         {
             string StateFaleText = btn_HreartState.Text;
-            if (StateFaleText == "心跳状态-开启")
+            if (StateFaleText == "开启心跳状态上报")
             {
                 t.Enabled = true;
-                btn_HreartState.Text = "心跳状态-关闭";
+                btn_HreartState.Text = "关闭心跳状态上报";
             }
             else
             {
                 t.Enabled = false;
-                btn_HreartState.Text = "心跳状态-开启";
+                btn_HreartState.Text = "开启心跳状态上报";
             }
         }
 

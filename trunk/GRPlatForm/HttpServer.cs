@@ -765,7 +765,10 @@ namespace GRPlatForm
                                     rHeart.SourceID = ServerForm.strSourceID;
                                     rHeart.sHBRONO = ServerForm.strHBRONO;
 
-                                    string fName = "01" + rHeart.sHBRONO + "0000000000000000";
+                                    Random rd = new Random();
+                                    string fName = "10" + rHeart.sHBRONO + "0000000000099999";
+
+                                  //  string fName = "01" + rHeart.sHBRONO + "0000000000000000";
                                     xmlHeartDoc = rHeart.EBDResponse(ebdb, "EBDResponse", fName);
                                     string xmlSignFileName = "\\EBDB_" + fName + ".xml";
                                     CreateXML(xmlHeartDoc, ServerForm.strBeSendFileMakeFolder + xmlSignFileName);
@@ -791,6 +794,9 @@ namespace GRPlatForm
                                     outputStream.Write(Encoding.UTF8.GetBytes(sEndLine), 0, 2);
                                     outputStream.Flush();//提交写入的数据                                        
                                     fsHeartSnd.Close();
+
+                                    ServerForm.mainFrm.serverFrm. OnlineCheck(true);
+
                                 }
                                 catch (Exception ep)
                                 {

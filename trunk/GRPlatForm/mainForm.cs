@@ -17,7 +17,7 @@ namespace GRPlatForm
         private ServerSetForm setServerFrm;
         private TmpFolderSetForm tmpforldFrm;
         private InfoSetForm infoFrm;
-        private ServerForm serverFrm;
+        public ServerForm serverFrm;
         //
         public static dbAccess dba;
         public List<string> lTarPathName = new List<string>();//接收到的Tar包列表

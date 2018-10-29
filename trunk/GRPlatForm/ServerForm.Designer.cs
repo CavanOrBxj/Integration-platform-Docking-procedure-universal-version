@@ -437,7 +437,7 @@
             this.btn_HreartState.Name = "btn_HreartState";
             this.btn_HreartState.Size = new System.Drawing.Size(188, 25);
             this.btn_HreartState.TabIndex = 10;
-            this.btn_HreartState.Text = "心跳状态-开启";
+            this.btn_HreartState.Text = "开启心跳状态上报";
             this.btn_HreartState.UseVisualStyleBackColor = true;
             this.btn_HreartState.Click += new System.EventHandler(this.btn_HreartState_Click);
             // 
@@ -449,7 +449,7 @@
             this.btn_InfroState.Name = "btn_InfroState";
             this.btn_InfroState.Size = new System.Drawing.Size(188, 25);
             this.btn_InfroState.TabIndex = 11;
-            this.btn_InfroState.Text = "信息状态-开启";
+            this.btn_InfroState.Text = "开启信息状态上报";
             this.btn_InfroState.UseVisualStyleBackColor = true;
             this.btn_InfroState.Click += new System.EventHandler(this.btn_InfroState_Click);
             // 
