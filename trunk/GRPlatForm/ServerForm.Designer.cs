@@ -98,11 +98,11 @@
             // btn_Verify
             // 
             this.btn_Verify.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_Verify.Location = new System.Drawing.Point(429, 23);
+            this.btn_Verify.Location = new System.Drawing.Point(369, 23);
             this.btn_Verify.Name = "btn_Verify";
             this.btn_Verify.Size = new System.Drawing.Size(94, 42);
             this.btn_Verify.TabIndex = 7;
-            this.btn_Verify.Text = "人工审核-开启";
+            this.btn_Verify.Text = "开启人工审核";
             this.btn_Verify.UseVisualStyleBackColor = true;
             this.btn_Verify.Click += new System.EventHandler(this.btn_Verify_Click);
             // 
@@ -127,7 +127,7 @@
             // btnStart
             // 
             this.btnStart.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnStart.Location = new System.Drawing.Point(529, 23);
+            this.btnStart.Location = new System.Drawing.Point(500, 23);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(107, 42);
             this.btnStart.TabIndex = 0;
