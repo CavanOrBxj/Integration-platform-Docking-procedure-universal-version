@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Apache.NMS;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -20,6 +21,13 @@ namespace GRPlatForm
         private bool RealAudioFlag = false;
         //MQ
         private MQ m_mq = null;
+        private static MQ m_mq_checkEBM = null;
+
+        private IMessageConsumer m_consumer; //消费者
+
+        private bool isConn = false; //是否已与MQ服务器正常连接
+
+
         Random rdMQFileName = new Random();
         object OMDRequestLock = new object();//OMDRequest业务锁
         public SendInfo send = new SendInfo();
@@ -161,6 +169,8 @@ namespace GRPlatForm
         //MQ指令集合
         private List<Property> m_lstProperty = new List<Property>();
         UserInfo MQUserInfo = new UserInfo();//MQ指令用户信息
+
+       private static FTPHelper ftphelper;
 
         [DllImport("TTSDLL.dll", EntryPoint = "TTSConvertOut", ExactSpelling = true, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi, SetLastError = true)]
         public static extern void TTSConvertOut([In()] [MarshalAs(UnmanagedType.LPStr)]string szPath, [In()][MarshalAs(UnmanagedType.LPStr)] string szContent);
@@ -362,11 +372,13 @@ namespace GRPlatForm
 
             if (EBMVerifyState)
             {
-                btn_Verify.Text = "人工审核-关闭";
+                btn_Verify.Text = "自动审核状态";
+                SingletonInfo.GetInstance().CheckEBMStatusFlag = "1";
             }
             else
             {
-                btn_Verify.Text = "人工审核-开启";
+                btn_Verify.Text = "人工审核状态";
+                SingletonInfo.GetInstance().CheckEBMStatusFlag = "0";
             }
 
             listAreaCode = new List<string>();  //2016-04-12
@@ -543,7 +555,10 @@ namespace GRPlatForm
             //InfromActiveTime.Elapsed += new System.Timers.ElapsedEventHandler(InfromActive);
             //InfromActiveTime.AutoReset = true;
 
-         //   InitAeracodeDic();
+            //   InitAeracodeDic();
+
+            ConnectMQServer();
+            InitFTPServer();
         }
 
 
@@ -1121,6 +1136,17 @@ namespace GRPlatForm
                                                     }
                                                     else //EBM实时流播放
                                                     {
+                                                        //待审核数据插入数据库
+                                                        // string CommandText = "insert into test(test1,test2) values(90,30) SELECT CAST(scope_identity() AS int)";
+                                                        string lab_EBMType = "文本转语音播发";
+
+                                                        sqlstr = "insert into CheckEBMData(EBDID, EBDDID, CodeA, NameA, EBMID, SentTime,EBMStartTime,EBMEndTime, EBMTitle,EBMType,EBMDesc,EBMCode,EBMUrl,CheckStatus)" +
+                    "values('" + ebd.SRC.EBRID + "','" + ebd.EBDID + "', '" + ebd.EBM.MsgBasicInfo.SenderCode + "', '" + ebd.EBM.MsgBasicInfo.SenderName + "','" + ebd.EBM.EBMID + "', '" + ebd.EBM.MsgBasicInfo.SentTime + "','" + ebd.EBM.MsgBasicInfo.StartTime + "','" + ebd.EBM.MsgBasicInfo.EndTime + "','" + ebd.EBM.MsgContent.MsgTitle + "','" + lab_EBMType + "','" + ebd.EBM.MsgContent.MsgDesc + "','" + ebd.EBM.MsgContent.AreaCode + "','" + ebd.EBM.MsgContent.Auxiliary.AuxiliaryDesc + "','" + SingletonInfo.GetInstance().CheckEBMStatusFlag + "') SELECT CAST(scope_identity() AS int)";
+                                                        ebd.CheckEBMDataID = mainForm.dba.InsertDbBySQLRetID(sqlstr).ToString();
+
+                                                        //MQ发送消息审核  
+                                                        CheckEBMDataMQSend(ebd);
+
                                                         if (strAuxiliaryType != "61" && !EBMVerifyState)//
                                                         {
                                                             ListViewItem listItem = new ListViewItem();
@@ -1241,6 +1267,17 @@ namespace GRPlatForm
                                                     AudioFileListTmp.AddRange(mp3files);
                                                     string[] wavfiles = Directory.GetFiles(sUnTarPath, "*.wav");
                                                     AudioFileListTmp.AddRange(wavfiles);
+
+                                                    //待审核数据插入数据库
+                                                    // string CommandText = "insert into test(test1,test2) values(90,30) SELECT CAST(scope_identity() AS int)";
+                                                    string lab_EBMType = "音频文件播发";
+                                                    sqlstr = "insert into CheckEBMData(EBDID, EBDDID, CodeA, NameA, EBMID, SentTime,EBMStartTime,EBMEndTime, EBMTitle,EBMType,EBMDesc,EBMCode,EBMUrl,CheckStatus)" +
+                "values('" + ebd.SRC.EBRID + "','" + ebd.EBDID + "', '" + ebd.EBM.MsgBasicInfo.SenderCode + "', '" + ebd.EBM.MsgBasicInfo.SenderName + "','" + ebd.EBM.EBMID + "', '" + ebd.EBM.MsgBasicInfo.SentTime + "','" + ebd.EBM.MsgBasicInfo.StartTime + "','" + ebd.EBM.MsgBasicInfo.EndTime + "','" + ebd.EBM.MsgContent.MsgTitle + "','" + lab_EBMType + "','" + ebd.EBM.MsgContent.MsgDesc + "','" + ebd.EBM.MsgContent.AreaCode + "','" + ebd.EBM.MsgContent.Auxiliary.AuxiliaryDesc + "','" + SingletonInfo.GetInstance().CheckEBMStatusFlag + "') SELECT CAST(scope_identity() AS int)";
+                                                    ebd.CheckEBMDataID = mainForm.dba.InsertDbBySQLRetID(sqlstr).ToString();
+
+                                                    //MQ发送消息审核  
+                                                    CheckEBMDataMQSend(ebd);
+
                                                     if (!EBMVerifyState && AudioFileListTmp.Count > 0)//
                                                     {
                                                         ListViewItem listItem = new ListViewItem();
@@ -1248,6 +1285,9 @@ namespace GRPlatForm
                                                         listItem.SubItems.Add(lDealTarFiles[0]);
                                                         this.Invoke(new Action(() => { list_PendingTask.Items.Add(listItem); }));
                                                         lDealTarFiles.RemoveAt(0);//无论是否成功，都移除
+                                                        string ftppath = ebd.EBM.MsgContent.Auxiliary.AuxiliaryDesc; 
+                                                        string path = AudioFileListTmp[0];
+                                                        ftphelper.UploadFile(path, ftppath);
                                                         continue;
                                                     }
                                                     string sTmpDealFile = string.Empty;
@@ -1461,6 +1501,88 @@ namespace GRPlatForm
                 #endregion 处理Tar包
 
             }//while循环处理解压缩文件
+        }
+
+
+  
+
+
+        private void CheckEBMDataMQSend(EBD EbdInfo)
+        {
+            List<Property> m_lstProperty = new List<Property>();
+            Property property;
+            property.name = "ID";  
+            property.value = EbdInfo.CheckEBMDataID;
+            m_lstProperty.Add(property);
+
+            property.name = "EBDID";
+            property.value = EbdInfo.SRC.EBRID;
+            m_lstProperty.Add(property);
+
+            property.name = "EBDDID";
+            property.value = EbdInfo.EBDID;
+            m_lstProperty.Add(property);
+
+            property.name = "CodeA";
+            property.value = EbdInfo.EBM.MsgBasicInfo.SenderCode;
+            m_lstProperty.Add(property);
+
+            property.name = "NameA";
+            property.value = EbdInfo.EBM.MsgBasicInfo.SenderName;
+            m_lstProperty.Add(property);
+
+            property.name = "EBMID";
+            property.value = EbdInfo.EBM.EBMID;
+            m_lstProperty.Add(property);
+
+            property.name = "SentTime";
+            property.value = EbdInfo.EBM.MsgBasicInfo.SentTime;
+            m_lstProperty.Add(property);
+
+            property.name = "EBMStartTime";
+            property.value = EbdInfo.EBM.MsgBasicInfo.StartTime;
+            m_lstProperty.Add(property);
+
+            property.name = "EBMEndTime";
+            property.value = EbdInfo.EBM.MsgBasicInfo.EndTime;
+            m_lstProperty.Add(property);
+
+            property.name = "EBMTitle";
+            property.value = EbdInfo.EBM.MsgContent.MsgTitle;
+            m_lstProperty.Add(property);
+
+
+            string lab_EBMType = "";
+            if (EbdInfo.EBM.MsgContent.Auxiliary != null)
+            {
+                lab_EBMType = "音频文件播发";
+            }
+            else
+            {
+                lab_EBMType = "文本转语音播发";
+            }
+
+            property.name = "EBMType";
+            property.value = lab_EBMType;
+            m_lstProperty.Add(property);
+
+            property.name = "EBMDesc";
+            property.value = EbdInfo.EBM.MsgContent.MsgDesc;
+            m_lstProperty.Add(property);
+
+            property.name = "EBMCode";
+            property.value = EbdInfo.EBM.MsgContent.AreaCode;
+            m_lstProperty.Add(property);
+
+            property.name = "EBMUrl";
+            property.value = EbdInfo.EBM.MsgContent.Auxiliary.AuxiliaryDesc;
+            m_lstProperty.Add(property);
+
+            property.name = "CheckStatus";
+            property.value = "0";
+            m_lstProperty.Add(property);
+
+            m_mq_checkEBM.SendMQMessage(true, "", m_lstProperty);
         }
 
         public string GetORG_ID(string code)
@@ -3336,17 +3458,19 @@ namespace GRPlatForm
         {
             //EBMVerifyState
             string StateFaleText = btn_Verify.Text;
-            if (StateFaleText == "开启人工审核")
+            if (StateFaleText == "人工审核状态")
             {
-                serverini.WriteValue("EBD", "EBMState", "true");
+                serverini.WriteValue("EBD", "EBMState", "True");
                 EBMVerifyState = true;//人工审核状态  true  表示已开启
-                btn_Verify.Text = "关闭人工审核";
+                btn_Verify.Text = "自动审核状态";
+                SingletonInfo.GetInstance().CheckEBMStatusFlag = "1";
             }
             else
             {
                 serverini.WriteValue("EBD", "EBMState", "False");
                 EBMVerifyState = false;
-                btn_Verify.Text = "开启人工审核";
+                btn_Verify.Text = "人工审核状态";
+                SingletonInfo.GetInstance().CheckEBMStatusFlag = "0";
             }
         }
 
@@ -3355,7 +3479,7 @@ namespace GRPlatForm
         {
             if (this.list_PendingTask.SelectedItems.Count > 0)
             {
-                string EBMPath = this.list_PendingTask.FocusedItem.SubItems[1].Text; ;
+                string EBMPath = this.list_PendingTask.FocusedItem.SubItems[1].Text; 
                 AnalysisEBM(EBMPath);
             }
         }
@@ -3634,6 +3758,277 @@ namespace GRPlatForm
             }
         }
 
+        /// <summary>
+        /// 审核完成后下发指令
+        /// </summary>
+        /// <param name="EBMPath"></param>
+        private void AnalysisEBMCheckOver(string EBMPath)
+        {
+            List<string> lDealTarFiles = new List<string>();
+            List<string> AudioFileListTmp = new List<string>();//收集的音频文件列表
+            List<string> AudioFileList = new List<string>();//收集的音频文件列表
+
+            SetText("解压文件：" + EBMPath.ToString(), Color.Green);
+            try
+            {
+                #region 解压
+                if (File.Exists(EBMPath))
+                {
+                    try
+                    {
+                        DeleteFolder(sUnTarPath);
+                        tar.UnpackTarFiles(EBMPath, sUnTarPath);
+                        //把压缩包解压到专门存放接收到的XML文件的文件夹下
+                        SetText("解压文件：" + EBMPath + "成功", Color.Green);
+                    }
+                    catch (Exception exa)
+                    {
+                        SetText("删除解压文件夹：" + sUnTarPath + "文件失败!错误信息：" + exa.Message, Color.Red);
+                    }
+                }
+                #endregion 解压
+            }
+            catch (Exception ex)
+            {
+                Log.Instance.LogWrite("解压出错：" + ex.Message);
+            }
+            try
+            {
+                string[] xmlfilenames = Directory.GetFiles(sUnTarPath, "*.xml");//从解压XML文件夹下获取解压的XML文件名
+                string sTmpFile = string.Empty;
+                string sAnalysisFileName = "";
+                string sSignFileName = "";
+
+                for (int i = 0; i < xmlfilenames.Length; i++)
+                {
+                    sTmpFile = Path.GetFileName(xmlfilenames[i]);
+                    if (sTmpFile.ToUpper().IndexOf("EBDB") > -1 && sTmpFile.ToUpper().IndexOf("EBDS_EBDB") < 0)
+                    {
+                        sAnalysisFileName = xmlfilenames[i];
+                    }
+                    else if (sTmpFile.ToUpper().IndexOf("EBDS_EBDB") > -1)//签名文件
+                    {
+                        sSignFileName = xmlfilenames[i];//签名文件
+                    }
+                }
+                DeleteFolder(sSourcePath);//删除原有XML发送文件的文件夹下的XML
+
+                if (sSignFileName == "")
+                {
+                    //验证签名功能
+                }
+                else
+                {
+                    #region 签名处理
+                    Console.WriteLine("开始验证签名文件!");
+                    using (FileStream SignFs = new FileStream(sSignFileName, FileMode.Open))
+                    {
+                        StreamReader signsr = new StreamReader(SignFs, System.Text.Encoding.UTF8);
+                        string xmlsign = signsr.ReadToEnd();
+                        signsr.Close();
+                        responseXML signrp = new responseXML();//签名回复
+                        XmlDocument xmlSignDoc = new XmlDocument();
+                        try
+                        {
+                            xmlsign = XmlSerialize.ReplaceLowOrderASCIICharacters(xmlsign);
+                            xmlsign = XmlSerialize.GetLowOrderASCIICharacters(xmlsign);
+                            Signature sign = XmlSerialize.DeserializeXML<Signature>(xmlsign);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Instance.LogWrite("签名文件错误：" + ex.Message);
+                        }
+                    }
+                    Console.WriteLine("结束验证签名文件！");
+                    #endregion End
+                }
+
+                if (sAnalysisFileName != "")
+                {
+                    using (FileStream fs = new FileStream(sAnalysisFileName, FileMode.Open))
+                    {
+                        StreamReader sr = new StreamReader(fs, Encoding.UTF8);
+                        String xmlInfo = sr.ReadToEnd();
+                        xmlInfo = xmlInfo.Replace("xmlns:xs", "xmlns");
+                        sr.Close();
+                        xmlInfo = XmlSerialize.ReplaceLowOrderASCIICharacters(xmlInfo);
+                        xmlInfo = XmlSerialize.GetLowOrderASCIICharacters(xmlInfo);
+                        ebd = XmlSerialize.DeserializeXML<EBD>(xmlInfo);
+                        if (ebd.EBM.MsgBasicInfo.MsgType == "2")
+                        {
+                            if (MessageBox.Show("请确定是否要下发关机指令", "应急关机包", MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
+                                == DialogResult.Yes)
+                            {
+                                SetText("停止播发：" + DateTime.Now.ToString(), Color.Red);
+                                string strSql = string.Format("update PLAYRECORD set PR_REC_STATUS = '{0}' where PR_SourceID='{1}'", "删除", TsCmdStoreID);
+                                strSql += " update EBMInfo set EBMState=1 where SEBDID='" + SEBDIDStatusFlag + "' ";
+                                strSql += "delete from InfoVlaue";
+                                //string strSql = "update PLAYRECORD set PR_REC_STATUS = '删除'";
+                                mainForm.dba.UpdateDbBySQL(strSql);
+                                Tccplayer.Enabled = false;
+                                ccplay.StopCPPPlayer2();
+                                RealAudioFlag = false;//标记为已经执行
+                                list_PendingTask.Items.Remove(list_PendingTask.FocusedItem);
+                                return;
+                            }
+                            else
+                            {
+                                return;
+                            }
+                        }
+                        AudioFileListTmp.Clear();
+                        AudioFileList.Clear();
+                        string[] mp3files = Directory.GetFiles(sUnTarPath, "*.mp3");
+                        AudioFileListTmp.AddRange(mp3files);
+                        string[] wavfiles = Directory.GetFiles(sUnTarPath, "*.wav");
+                        AudioFileListTmp.AddRange(wavfiles);
+                        EBMInfo EBMInfo = new EBMInfo();
+                        EBMInfo.ebd = ebd;
+                        if (AudioFileListTmp.Count > 0)
+                        {
+                            EBMInfo.AudioUrl = AudioFileListTmp[0];
+                        }
+                            list_PendingTask.Items.Remove(list_PendingTask.FocusedItem);
+                            string sqlstr = "";
+                            if (AudioFileListTmp.Count > 0)
+                            {
+                                string sTmpDealFile = string.Empty;
+                                string targetPath = string.Empty;
+                                string strurl = "";
+                                string sDateTime = "";
+                                string sStartTime = ebd.EBM.MsgBasicInfo.StartTime;
+                                string sEndDateTime = ebd.EBM.MsgBasicInfo.EndTime;
+                                // string sGBCode = "";
+                                string sORG_ID = "";
+                                string sAread = "";
+                                string xmlFilePath = "";
+                                //if ((AudioFlag == "2")&&(TextFirst=="2")) //拷贝xml文件
+                                {
+                                    string xmlFile = Path.GetFileName(sAnalysisFileName);
+                                    xmlFilePath = sAudioFilesFolder + "\\" + xmlFile;
+                                    File.Copy(sAnalysisFileName, xmlFilePath, true);
+                                }
+                                for (int ai = 0; ai < AudioFileListTmp.Count; ai++)
+                                {
+                                    sTmpDealFile = Path.GetFileName(AudioFileListTmp[ai]);
+                                    targetPath = sAudioFilesFolder + "\\" + sTmpDealFile;
+                                    File.Copy(AudioFileListTmp[ai], targetPath, true);
+                                    AudioFileList.Add(targetPath);
+
+
+                                    SetText("EBM开始时间: " + ebd.EBM.MsgBasicInfo.StartTime + "===>EBM结束时间: " + ebd.EBM.MsgBasicInfo.EndTime, Color.Blue);
+                                    DateTime EbStartTime = DateTime.Parse(ebd.EBM.MsgBasicInfo.StartTime).AddSeconds(2);
+                                    if (EbStartTime < DateTime.Now)
+                                    {
+                                        EbStartTime = DateTime.Now.AddSeconds(2);
+                                    }
+
+                                    sDateTime = EbStartTime.ToString("yyyy-MM-dd HH:mm:ss");  //ebd.EBM.MsgBasicInfo.StartTime;
+                                    sStartTime = EbStartTime.ToString("yyyy-MM-dd HH:mm:ss"); //ebd.EBM.MsgBasicInfo.StartTime;
+                                    sEndDateTime = ebd.EBM.MsgBasicInfo.EndTime;
+                                    if (TEST == "YES")
+                                    {
+                                        sDateTime = DateTime.Now.AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss");
+                                        sStartTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                                        sEndDateTime = DateTime.Now.AddMinutes(5).ToString("yyyy-MM-dd HH:mm:ss");//ebd.EBM.MsgBasicInfo.EndTime;
+                                    }
+
+                                    SetText("开始时间: " + sDateTime + "===>结束时间: " + sEndDateTime + "是否是TEST:" + TEST, Color.Blue);
+                                    sAread = ebd.EBM.MsgContent.AreaCode; //区域
+                                    sORG_ID = ebd.EBM.EBMID;
+                                    strurl = targetPath;  //音频文件地址
+                                    // sqlstr = "insert into TsCmdStoreMedia(TsCmd_Type, TsCmd_Mode, TsCmd_UserID, TsCmd_ValueID, TsCmd_Params, TsCmd_Date, TsCmd_Status,TsCmd_StartTime,TsCmd_EndTime,TsCmd_XmlFile)" +
+                                    //        "values('播放音频', '" + sAread + "', 1, '" + sORG_ID + "', '" + strurl + "', '" + sDateTime + "', 0,'" + sStartTime + "','" + sEndDateTime + "','" + xmlFilePath + "')";
+                                    //int identityID = mainForm.dba.UpdateDbBySQLRetID(sqlstr);
+                                    //Console.WriteLine(identityID);
+                                    string sORG_ID2 = GetORG_ID(ebd.EBM.MsgContent.AreaCode);
+                                    string paramValue = "1~" + strurl + "~0~1000~128~0~1~1";
+                                    if ((PlayType == "2"))
+                                    {
+                                        SetText("音频文件存库，将在指定时间内播放", Color.Blue);
+                                        sqlstr = "insert into TsCmdStore(TsCmd_Type, TsCmd_Mode, TsCmd_UserID, TsCmd_ValueID, TsCmd_Params, TsCmd_Date,TsCmd_ExcuteTime,TsCmd_SaveTime, TsCmd_Status,TsCmd_EndTime,TsCmd_Note)" +
+                                           "values('播放视频', '区域', 1, " + sORG_ID2 + ", '" + paramValue + "', " + "'" + sDateTime + "'" + ",'" + sDateTime + "','" + sDateTime + "', 0,'" + sEndDateTime + "'," + "'-1'" + ")";
+                                        //sqlstr = "insert into TsCmdStore(TsCmd_Type, TsCmd_Mode, TsCmd_UserID, TsCmd_ValueID, TsCmd_Params, TsCmd_Date,TsCmd_ExcuteTime,TsCmd_SaveTime, TsCmd_Status,TsCmd_EndTime,TsCmd_Note)" +
+                                        //   "values('播放视频', '区域', 1, " + sORG_ID2 + ", '1~" + strurl + "~0~1200~192~0~1~1', " + "'" + sDateTime + "'" + ",'" + sDateTime + "','" + sDateTime + "', 0,'" + sEndDateTime + "'," + "'-1'" + ")";
+                                        //int iback = mainForm.dba.getResultIDBySQL(sqlstr, "TsCmdStore");
+                                        TsCmdStoreID = mainForm.dba.UpdateDbBySQLRetID(sqlstr).ToString();
+                                        //paramValue = "1~D:\\rhtest_6_1\\apache-tomcat-7.0.69\\webapps\\ch-eoc\\upload/6666.mp3~0~1200~192~0~1~1";//1~D:\\rhtest_6_1\\apache-tomcat-7.0.69\\webapps\\ch-eoc\\upload/6666.mp3~0~1000~128~0~1~1
+                                        SendMQOrder(1, paramValue, TsCmdStoreID);//MQ发送
+                                        Thread.Sleep(500);
+                                        Console.WriteLine(TsCmdStoreID);
+                                    }
+                                }
+                            }
+                            else//文本转语音
+                            {
+                                SetText("EBM开始时间: " + ebd.EBM.MsgBasicInfo.StartTime + "===>EBM结束时间: " + ebd.EBM.MsgBasicInfo.EndTime, Color.Blue);
+                                DateTime EBStartTime = DateTime.Parse(ebd.EBM.MsgBasicInfo.StartTime).AddSeconds(2);
+                                if (EBStartTime < DateTime.Now)
+                                {
+                                    EBStartTime = DateTime.Now.AddSeconds(2);
+                                }
+                                string sStartTime = EBStartTime.ToString("yyyy-MM-dd HH:mm:ss"); //ebd.EBM.MsgBasicInfo.StartTime;
+                                string sDateTime = EBStartTime.ToString("yyyy-MM-dd HH:mm:ss");//ebd.EBM.MsgBasicInfo.StartTime;
+                                string sEndDateTime = ebd.EBM.MsgBasicInfo.EndTime;
+                                ccplayerStopTime = DateTime.Parse(sEndDateTime);
+                                if (TEST == "YES")
+                                {
+                                    sStartTime = DateTime.Now.AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss");
+                                    sDateTime = DateTime.Now.AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss");
+                                    sEndDateTime = DateTime.Now.AddMinutes(5).ToString("yyyy-MM-dd HH:mm:ss");//ebd.EBM.MsgBasicInfo.EndTime;
+                                    ccplayerStopTime = DateTime.Now.AddMinutes(2);
+
+                                }
+                                SetText("实时流开始时间>>>>" + sStartTime + "----结束时间>>>" + ccplayerStopTime.ToString("yyyy-MM-dd HH:mm:ss") + "是否是TEST:" + TEST, Color.Blue);
+                                string strPID = m_nAudioPIDID + "~1";
+                                string sORG_ID = GetORG_ID(ebd.EBM.MsgContent.AreaCode);//((int)mainForm.dba.getQueryResultBySQL(sqlstr)).ToString();
+                                sqlstr = "insert into TsCmdStore(TsCmd_Type, TsCmd_Mode, TsCmd_UserID, TsCmd_ValueID, TsCmd_Params, TsCmd_Date, TsCmd_Status,TsCmd_EndTime,TsCmd_Note)" +
+                                        "values('音源播放', '区域', 1, " + sORG_ID + ", '" + strPID + "', '" + sDateTime + "', 0,'" + sEndDateTime + "'," + "'-1'" + ")";
+
+                                TsCmdStoreID = mainForm.dba.UpdateDbBySQLRetID(sqlstr).ToString();
+                                SendMQOrder(2, strPID, TsCmdStoreID);//MQ发送
+                                Thread.Sleep(500);
+                                SetText("立即播放音频延时开始：" + DateTime.Now.ToString(), Color.Blue);
+                                Thread.Sleep(iMediaDelayTime);//延迟10秒
+                                Application.DoEvents();
+                                SetText("立即播放音频开始：" + DateTime.Now.ToString(), Color.Blue);
+                                string FileNameNum = "";
+                                FileNameNum = rdMQFileName.Next(00, 99).ToString();
+                                string Message = ebd.EBM.MsgContent.MsgDesc;
+                                SetText(Message, Color.Olive);
+                                if (MQStartFlag)
+                                    MQDLL.SendMessageMQ("PACKETTYPE~TTS|CONTENT~" + Message + "|FILE~" + FileNameNum + ".wav");
+                                Thread.Sleep(5000);
+                                ccplay.TsCmdStoreID = TsCmdStoreID;//PlayRecord停止的标示
+                                m_ccplayURL = AudioCloudIP + FileNameNum + ".wav";     //"udp://@" + m_StreamPortURL;
+                                if (ccplay.m_bPlayFlag == false)
+                                {
+                                    ccplay.m_bPlayFlag = true;
+                                }
+                                else
+                                {
+                                    ccplay.StopCPPPlayer2();
+                                    Thread.Sleep(1000);
+                                    ccplayerthread.Abort();
+                                    Thread.Sleep(1000);
+                                    ccplayerthread = new Thread(CPPPlayerThread);
+                                    ccplayerthread.Start();
+                                }
+                            }
+                            #region SaveEBDInfo
+                            if (SaveEBD(ebd) == -1)
+                                Console.WriteLine("Error: 保存EBMInfo出错");
+                            #endregion
+                        
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
         private void EBMStateRequest()
         {
             SetText("EBMStateRequest    NO:1", Color.Orange);
@@ -3677,18 +4072,88 @@ namespace GRPlatForm
         private void MQActivStart()
         {
             m_mq = new MQ();
-            m_mq.uri = serverini.ReadValue("MQActiveOrder", "ServerUrl"); ;
-            m_mq.username = serverini.ReadValue("MQActiveOrder", "User"); ;
+            m_mq.uri = serverini.ReadValue("MQActiveOrder", "ServerUrl"); 
+            m_mq.username = serverini.ReadValue("MQActiveOrder", "User"); 
             m_mq.password = serverini.ReadValue("MQActiveOrder", "Password");
             m_mq.Start();
             Thread.Sleep(500);
             m_mq.CreateProducer(true, "fee.bar");
-            //Property ite = new Property();
-            //ite.name = "你是猪吗?";
-            //ite.value = "这个都不会";
-            //m_lstProperty.Add(ite);
-            //m_mq.SendMQMessage(true, "Send", m_lstProperty);
         }
+
+        private void ConnectMQServer()
+        {
+            try
+            {
+                m_mq_checkEBM = new MQ();
+                m_mq_checkEBM.uri = serverini.ReadValue("MQCheckEbmInfo", "ServerUrl");
+                m_mq_checkEBM.username = serverini.ReadValue("MQCheckEbmInfo", "User");
+                m_mq_checkEBM.password = serverini.ReadValue("MQCheckEbmInfo", "Password");
+                m_mq_checkEBM.Start();
+                isConn = true;
+                m_consumer = m_mq_checkEBM.CreateConsumer(true, serverini.ReadValue("MQCheckEbmInfo", "ReceiveTopicName"));
+                m_consumer.Listener += new MessageListener(consumer_listener_ChenckData);
+                m_mq_checkEBM.CreateProducer(true, serverini.ReadValue("MQCheckEbmInfo", "SendTopicName"));//创建消息生产者   //Queue
+            }
+            catch (Exception ex)
+            {
+                Log.Instance.LogWrite(ex.Message);
+            }
+
+        }
+
+        private void InitFTPServer()
+        {
+            string ftpserver= serverini.ReadValue("FTPServer", "ftpserver");
+            string ftpusername= serverini.ReadValue("FTPServer", "ftpusername");
+            string ftppwd= serverini.ReadValue("FTPServer", "ftppwd");
+            ftphelper = new FTPHelper(ftpserver, ftpusername, ftppwd);
+        }
+
+
+        /// <summary>
+        /// MQ消息接收  字符串
+        /// </summary>
+        /// <param name="message"></param>
+        private void consumer_listener(IMessage message)
+        {
+            try
+            {
+                string strMsg;
+                ITextMessage msg = (ITextMessage)message;
+                strMsg = msg.Text;
+                Log.Instance.LogWrite("MQ接收信息打印：" + strMsg);
+            }
+            catch (Exception ex)
+            {
+                Log.Instance.LogWrite(ex.Message);
+            }
+        }
+
+        /// <summary>
+        ///  MQ消息接收   键值对
+        /// </summary>
+        /// <param name="message"></param>
+        private void consumer_listener_ChenckData(IMessage message)
+        {
+            try
+            {
+               Serialize(message.Properties);
+            }
+            catch (Exception ex)
+            {
+                this.m_consumer.Close();
+            }
+        }
+
+        public void Serialize(IPrimitiveMap MsgMap)
+        {
+            string ID = MsgMap["ID"].ToString();
+            string EBDDID = MsgMap["EBDDID"].ToString();
+
+
+        }
+
+
 
         private bool SendMQOrder(int Type, string ParamValue, string TsCmd_ID)
         {
@@ -3882,6 +4347,14 @@ namespace GRPlatForm
             fromFile.Close();
             toFile.Close();
             return true;
+        }
+
+        private void button5_Click_1(object sender, EventArgs e)
+        {
+            string ID = "7";
+            string EBDDID = "100102320000000000010000000001010861";
+            string EBMPath = sRevTarPath+"//"+ EBDDID + ".tar";
+            AnalysisEBMCheckOver(EBMPath);
         }
     }
 }

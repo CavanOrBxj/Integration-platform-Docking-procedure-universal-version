@@ -69,6 +69,7 @@
             this.btn_InfroState = new System.Windows.Forms.Button();
             this.panelContainer2 = new DevExpress.XtraBars.Docking.DockPanel();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.button5 = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dockManager1)).BeginInit();
@@ -85,6 +86,7 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.button5);
             this.panel1.Controls.Add(this.btn_Verify);
             this.panel1.Controls.Add(this.txtServerPort);
             this.panel1.Controls.Add(this.label1);
@@ -102,7 +104,7 @@
             this.btn_Verify.Name = "btn_Verify";
             this.btn_Verify.Size = new System.Drawing.Size(94, 42);
             this.btn_Verify.TabIndex = 7;
-            this.btn_Verify.Text = "开启人工审核";
+            this.btn_Verify.Text = "人工审核状态";
             this.btn_Verify.UseVisualStyleBackColor = true;
             this.btn_Verify.Click += new System.EventHandler(this.btn_Verify_Click);
             // 
@@ -466,6 +468,17 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
+            // button5
+            // 
+            this.button5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.button5.Location = new System.Drawing.Point(235, 21);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(107, 42);
+            this.button5.TabIndex = 8;
+            this.button5.Text = "测试按钮";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click_1);
+            // 
             // ServerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -539,5 +552,6 @@
         private System.Windows.Forms.ColumnHeader EBMStartTime;
         private System.Windows.Forms.ColumnHeader EBMEndTime;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.Button button5;
     }
 }

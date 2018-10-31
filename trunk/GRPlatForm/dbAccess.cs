@@ -312,6 +312,40 @@ namespace GRPlatForm
             }
         }
 
+        /// <summary>
+        /// 插入数据并返回ID
+        /// </summary>
+        /// <param name="sSQL"></param>
+        /// <returns></returns>
+        public int InsertDbBySQLRetID(string sSQL)
+        {
+            try
+            {
+                int iRet = 0;
+                SqlCommand cmd = new SqlCommand(sSQL, conn);
+                if (conn.State != ConnectionState.Open)
+                    conn.Open();
+
+                cmd.Connection = conn;
+                cmd.CommandText = sSQL;
+                cmd.CommandType = CommandType.Text;
+                if (conn.State != ConnectionState.Open)
+                    conn.Open();
+                iRet = (int)cmd.ExecuteScalar();
+                return iRet;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("InsertDbBySQL:" + e.Message);
+                return -1;
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+        }
+
         public int UpdateDbBySQLRetID(string sSQL)
         {
             try

@@ -136,6 +136,7 @@
       <DependentUpon>EBMInfo.cs</DependentUpon>
     </Compile>
     <Compile Include="EBMStateRequest.cs" />
+    <Compile Include="FTPHelper.cs" />
     <Compile Include="HttpSendFile.cs" />
     <Compile Include="HttpServer.cs" />
     <Compile Include="InfoSetForm.cs">

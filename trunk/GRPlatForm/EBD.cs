@@ -36,6 +36,8 @@ namespace GRPlatForm
 
         public EBMStreamPortRequest EBMStreamPortRequest;
 
+        public string CheckEBMDataID;
+
     }
 
 
