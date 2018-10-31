@@ -3336,17 +3336,17 @@ namespace GRPlatForm
         {
             //EBMVerifyState
             string StateFaleText = btn_Verify.Text;
-            if (StateFaleText == "人工审核-开启")
+            if (StateFaleText == "开启人工审核")
             {
                 serverini.WriteValue("EBD", "EBMState", "true");
-                EBMVerifyState = true;
-                btn_Verify.Text = "人工审核-关闭";
+                EBMVerifyState = true;//人工审核状态  true  表示已开启
+                btn_Verify.Text = "关闭人工审核";
             }
             else
             {
                 serverini.WriteValue("EBD", "EBMState", "False");
                 EBMVerifyState = false;
-                btn_Verify.Text = "人工审核-开启";
+                btn_Verify.Text = "开启人工审核";
             }
         }
 
