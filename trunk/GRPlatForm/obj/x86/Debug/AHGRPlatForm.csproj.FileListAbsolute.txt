@@ -599,10 +599,12 @@ D:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatF
 E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\bin\Debug\HBPlatForm.exe.config
 E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\bin\Debug\HBPlatForm.exe
 E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\bin\Debug\HBPlatForm.pdb
-E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\AHGRPlatForm.csprojAssemblyReference.cache
+E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\GRPlatForm.AddPoliceItem.resources
 E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\GRPlatForm.AudioPlay.resources
 E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\GRPlatForm.AudioPlayer.resources
 E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\GRPlatForm.EBMInfo.resources
+E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\GRPlatForm.Form_playtactics.resources
+E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\GRPlatForm.From_Timetactics.resources
 E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\GRPlatForm.InfoSetForm.resources
 E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\GRPlatForm.frmLogin.resources
 E:\GitHub\Integration-platform-Docking-procedure-universal-version\trunk\GRPlatForm\obj\x86\Debug\GRPlatForm.mainForm.resources
